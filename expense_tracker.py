@@ -22,6 +22,37 @@ def calculate_percent_spent(category):
         return (category['total_amount_spent'] / category['max_budget']) * 100
     return 0
 
+def add_income(income, amount):
+    income_entry = {
+        'date' : date.today(),
+        'amount' : amount
+    }
+    income.append(income_entry)
+
+def overspending(categories):
+    if not categories:
+        print("Error! Add some category and spendings first")
+        return
+
+    overspent_category = 0
+    amount_overspent = 0
+    is_overspent = False
+    for index, category in enumerate(categories):
+        if category['total_amount_spent'] < 0:
+            print("Error! Negative balance in total amount spent")
+            return
+        
+        if category['total_amount_spent'] > category['max_budget']:
+            overspent = abs(category['max_budget'] - category['total_amount_spent'])
+            if overspent > amount_overspent:
+                overspent_category = index
+                amount_overspent = overspent
+                is_overspent = True
+
+    if is_overspent:
+        print(f"Overspent category with furthest spendings compared to max budget : '{categories[overspent_category]['category_name']}' by ${amount_overspent:.2f}")
+        return
+    print(f"No category with spendings more than budget.")
 
 def add_expense(categories, category_name, amount):
     if not categories:
@@ -74,8 +105,91 @@ def show_summary(categories):
             print("-"*50)
     return
 
+def total_spent_in_month(categories, target_month, target_year):
+    total = 0
+    for category in categories:
+        for entry in category['spendings']:
+            if entry['date'].month == target_month and entry['date'].year == target_year:
+                total += entry['amount_spent']
+    return total
+
+def total_spent_in_year(categories, target_year):
+    total = 0
+    for month in range(1, 13):
+        total += total_spent_in_month(categories, month, target_year)
+    return total
+
+def total_income_in_year(income, target_year):
+    total = 0
+    for month in range(1, 13):
+        total += total_income_in_month(income, month, target_year)
+    return total
+
+def total_income_in_month(income, target_month, target_year):
+    total = 0
+    for entry in income:
+        if entry['date'].month == target_month and entry['date'].year == target_year:
+            total += entry['amount']
+    return total
+
+def calculate_net_for_month(categories, income, target_month, target_year):
+    target_month_spendings = total_spent_in_month(categories, target_month, target_year)
+    target_month_income = total_income_in_month(income, target_month, target_year)
+
+    print(f"Net for month {target_month}/{target_year} : ${target_month_income - target_month_spendings:.2f}")
+    return
+
+def calculate_net_for_year(categories, income, target_year):
+    target_year_income = total_income_in_year(income, target_year)
+    target_year_spendings = total_spent_in_year(categories, target_year)
+
+    print(f"Net for year {target_year} ${target_year_income - target_year_spendings:.2f}")
+    return
+
+def year_to_year_comparison(categories, first_year, next_year):
+    if not categories:
+        print("Error! No categories found. Add some categories and spendings first")
+        return
+
+    first_year_total = total_spent_in_year(categories, first_year)
+    next_year_total = total_spent_in_year(categories, next_year)
+
+    if first_year_total > next_year_total:
+        print(f"Year '{first_year}' has higher spendings than '{next_year}' by ${first_year_total - next_year_total:.2f}")
+        print(f"Total spendings : ${first_year_total:.2f}")
+        return
+    elif next_year_total > first_year_total:
+        print(f"Year '{next_year}' has higher spendings than '{first_year}' by ${next_year_total - first_year_total:.2f}")
+        print(f"Total spendings : ${next_year_total:.2f}")
+        return
+    else:
+        print(f"Both years have same spendings of ${first_year_total:.2f}")
+        return
+
+
+def month_to_month_comparison(categories, first_month, first_year, next_month, next_year):
+    if not categories:
+        print("Error! No categories found. Add some categories and spendings first")
+        return
+    
+    first_month_total = total_spent_in_month(categories, first_month, first_year)
+    next_month_total = total_spent_in_month(categories, next_month, next_year)
+
+    if first_month_total > next_month_total:
+        print(f"'{first_month}' has higher spendings than '{next_month}' by ${first_month_total - next_month_total:.2f}")
+        print(f"Total spendings : ${first_month_total:.2f}")
+        return
+    elif first_month_total < next_month_total:
+        print(f"'{next_month}' has higher spendings than '{first_month}' by ${next_month_total - first_month_total:.2f}")
+        print(f"Total spendings : ${next_month_total:.2f}")
+        return
+    else:
+        print(f"Both months has same spendings of ${first_month_total:.2f}")
+        return
+
 
 def main():
+    income = []
     categories = []
 
     add_category(categories, "food", 200)
