@@ -1,3 +1,4 @@
+import time, sys
 import json
 from datetime import date
 
@@ -32,9 +33,31 @@ def load_data(filename="budget_data.json"):
             for entry in income:
                 entry['date'] = date.fromisoformat(entry['date'])
 
-            return categories, data
+            return categories, income
     except FileNotFoundError:
         return [], []
+
+def animation(message = "Loading", duration = 2):
+    end_time = time.time() + duration   
+    while end_time > time.time():
+        for dots in range(1, 6):
+            sys.stdout.write(f"\r{message}{'.' * dots}{' ' *(5-dots)}")
+            sys.stdout.flush()
+            time.sleep(0.3)
+    sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
+    sys.stdout.flush()
+
+def clear_line(text):
+  sys.stdout.write("\r" + " " * (len(text) + 10) + "\r")
+  sys.stdout.flush()
+
+def loading_animation(message, duration=2):
+    animation(message, duration)
+    text = "Done!"
+    sys.stdout.write(f"\r{text}")
+    sys.stdout.flush()
+    time.sleep(1)
+    clear_line(text)
 
 def add_category(categories, category_name, max_budget):
     for category in categories:
@@ -225,31 +248,97 @@ def month_to_month_comparison(categories, first_month, first_year, next_month, n
 
 
 def main():
+    loading_animation("Lodaing data", duration = 4)
     income = []
     categories = []
 
     categories, income = load_data()
 
-    add_category(categories, "food", 200)
-    add_category(categories, "transport", 50)
+    while True:
+        print("\n" + "=" * 60)
+        print("EXPENSE TRACKER & BUDGET ANALYZER".center((60)))
+        print("="*60)
+        print("1. Add category / set budget")
+        print("2. Log an expense")
+        print("3. Log income")
+        print("4. View summary")
+        print("5. Check overspending")
+        print("6. Compare two months")
+        print("7. Compare two years")
+        print("8. Calculate net for month")
+        print("9. Calculate net for year")
+        print("10. Exit")
+        print("-" * 60)
 
-    print()
-    add_expense(categories, "food", 50)    # 25% - just logged
-    add_expense(categories, "food", 110)   # 80% - approaching limit
-    add_expense(categories, "food", 30)    # 95% - still approaching
-    add_expense(categories, "food", 20)    # 105% - over budget
+        try:
+            choice = int(input("Enter from the above options (1-10) : "))
+            if choice in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+                if choice == 1:
+                    category_name = input("Enter category name : ")
+                    max_budget = float(input("Enter your budget : $"))
+                    loading_animation("Adding category / setting budget", duration = 2)
+                    
+                    add_category(categories, category_name, max_budget)
 
-    print()
-    add_expense(categories, "transport", 60)  # over budget on first log
-    add_expense(categories, "rent", 10)       # category doesn't exist
+                elif choice == 2:
+                    category_name = input("Enter category name : ")
+                    expense = float(input("Enter expense amount : $"))
 
-    print()
-    add_category(categories, "entertainment", -15)
-    add_expense(categories, "entertainment", 15)  # should refuse - zero budget
+                    add_expense(categories, category_name, expense)
 
-    print("\n--- Summary ---")
-    show_summary(categories)
+                elif choice == 3:
+                    amount = float(input("Enter your income amount : $"))
+                    loading_animation("Logging income", duration = 2)
 
+                    add_income(income, amount)
+
+                elif choice == 4:
+                    loading_animation("Loading summary", duration = 2)
+                    show_summary(categories)
+
+                elif choice == 5:
+                    loading_animation("Checking overspendings", duration = 2)
+                    overspending(categories)
+
+                elif choice == 6:
+                    first_month = int(input("Input first month in number (1-12) : "))
+                    first_year = int(input("Input first year (eg: 2026) : "))
+                    second_month = int(input("Enter second month in number : "))
+                    second_year = int(input("Enter second year : "))
+                    loading_animation(f"Comparing month {first_month} of {first_year} with month {second_month} of {second_year}", duration = 2)
+
+                    month_to_month_comparison(categories, first_month, first_year, second_month, second_year)
+
+                elif choice == 7:
+                    first_year = int(input("Enter first year (eg: 2025) : "))
+                    second_year = int(input("Enter second year : "))
+                    loading_animation(f"Comparing year {first_year} with year {second_year}", duration = 2)
+
+                    year_to_year_comparison(categories, first_year, second_year)
+
+                elif choice == 8:
+                    month = int(input("Enter month in number (1-12) : "))
+                    year = int(input("Enter year (eg: 2026) : "))
+                    loading_animation(f"Calculating net for month {month} of {year}", duration = 2)
+
+                    calculate_net_for_month(categories, income, month, year)
+
+                elif choice == 9:
+                    year = int(input("Enter year (eg: 2026) : "))
+                    loading_animation(f"Calculating net for year {year}", duration = 2)
+
+                    calculate_net_for_year(categories, income, year)
+
+                else:
+                    loading_animation("Exiting expense tracker & budget analyzer", duration = 3)
+                    print("Thank you for using expense tracker & budget analyzer!")
+                    break
+            else:
+                print("Error! Invalid choice")
+                continue
+        except ValueError:
+            print("Error! Invalid input")
+            continue
     save_data(categories, income)
 
 if __name__ == "__main__":
