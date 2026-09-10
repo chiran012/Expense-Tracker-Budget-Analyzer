@@ -1,4 +1,40 @@
+import json
 from datetime import date
+
+def save_data(categories, income, filename="budget_data.json"):
+
+    for category in categories:
+        for entry in category['spendings']:
+            entry['date'] = entry['date'].isoformat()
+
+    for entry in income:
+        entry['date'] = entry['date'].isoformat()
+
+    data = {
+        'categories' : categories,
+        'income' : income
+    }
+
+    with open(filename, "w") as file:
+        json.dump(data, file)
+
+def load_data(filename="budget_data.json"):
+    try:
+        with open(filename, "r") as file:
+            data = json.load(file)
+            categories = data['categories']
+            income = data['income']
+
+            for category in categories:
+                for entry in category['spendings']:
+                    entry['date'] = date.fromisoformat(entry['date'])
+
+            for entry in income:
+                entry['date'] = date.fromisoformat(entry['date'])
+
+            return categories, data
+    except FileNotFoundError:
+        return [], []
 
 def add_category(categories, category_name, max_budget):
     for category in categories:
@@ -192,6 +228,8 @@ def main():
     income = []
     categories = []
 
+    categories, income = load_data()
+
     add_category(categories, "food", 200)
     add_category(categories, "transport", 50)
 
@@ -211,6 +249,8 @@ def main():
 
     print("\n--- Summary ---")
     show_summary(categories)
+
+    save_data(categories, income)
 
 if __name__ == "__main__":
     main()
